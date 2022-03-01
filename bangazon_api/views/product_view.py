@@ -12,6 +12,7 @@ from bangazon_api.models import Product, Store, Category, Order, Rating, Recomme
 from bangazon_api.serializers import (
     ProductSerializer, CreateProductSerializer, MessageSerializer,
     AddProductRatingSerializer, AddRemoveRecommendationSerializer)
+from django.db.models import Q
 
 
 class ProductView(ViewSet):
@@ -96,7 +97,8 @@ class ProductView(ViewSet):
     def destroy(self, request, pk):
         """Delete a product"""
         try:
-            product = Product.objects.get(pk=pk, store__seller=request.auth.user)
+            product = Product.objects.get(
+                pk=pk, store__seller=request.auth.user)
             product.delete()
             return Response(None, status=status.HTTP_204_NO_CONTENT)
         except Product.DoesNotExist as ex:
@@ -169,8 +171,8 @@ class ProductView(ViewSet):
 
         if number_sold:
             products = products.annotate(
-                order_count=Count('orders')
-            ).filter(order_count__lt=number_sold)
+                order_count=Count('orders', filter=~Q(order_payment_type=None))
+            ).filter(order_count__gte=number_sold)
 
         if order is not None:
             order_filter = f'-{order}' if direction == 'desc' else order
@@ -251,6 +253,7 @@ class ProductView(ViewSet):
             product = Product.objects.get(pk=pk)
             order = Order.objects.get(
                 user=request.auth.user, completed_on=None)
+            order.products.remove(product)
             return Response(None, status=status.HTTP_204_NO_CONTENT)
         except Product.DoesNotExist as ex:
             return Response({'message': ex.args[0]}, status=status.HTTP_404_NOT_FOUND)
