@@ -260,6 +260,22 @@ class ProductView(ViewSet):
         except Order.DoesNotExist as ex:
             return Response({'message': ex.args[0]}, status=status.HTTP_404_NOT_FOUND)
 
+    @action(methods=['post'], detail=True)
+    def unlike(self, request, pk):
+        """add store to like list"""
+        user = request.auth.user
+        product = Product.objects.get(pk=pk)
+        product.liked_products.add()
+        return Response({'message': "like added"}, status=status.HTTP_201_CREATED)
+
+    @action(methods=['post'], detail=True)
+    def unlike(self, request, pk):
+        """remove store from like list"""
+        user = request.auth.user
+        product = Product.objects.get(pk=pk)
+        product.liked_products.remove(user)
+        return Response({'message': 'like removed'}, status=status.HTTP_204_NO_CONTENT)
+
     @swagger_auto_schema(
         method='DELETE',
         request_body=AddRemoveRecommendationSerializer(),

@@ -1,5 +1,6 @@
 from django.db import models
 from django.core.validators import MaxValueValidator, MinValueValidator
+from django.contrib.auth.models import User
 
 
 class Product(models.Model):
@@ -15,6 +16,8 @@ class Product(models.Model):
                                    width_field=None, max_length=None, null=True, blank=True)
     category = models.ForeignKey(
         "Category", on_delete=models.CASCADE, related_name='products')
+    liked_products = models.ManyToManyField(
+        User, through="like", related_name="products")
 
     def save(self, *args, **kwargs):
         self.clean_fields()
